@@ -33,8 +33,8 @@ const char MS2[] = "\r\nby Eugene Rockey Copyright 2013 All Rights Reserved";
 const char MS3[] = "\r\nReady: ";
 const char MS4[] = "\r\nInvalid Command Try Again...";
 const char GPUDATAERROR[] = "\r\nSystem Error: Invalid GPU Data";
-const char LOGONNAME[] = "eugene    ";
-const char PASSWORD[] = "cecs525   ";
+const char LOGONNAME[] = "eugene";
+const char PASSWORD[] = "cecs525";
 //PWM Data for Alarm Tone
 uint32_t N[200] = {0,1,2,3,4,5,6,7,8,9,10,11,12,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,
 				36,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,60,61,62,63,64,65,66,67,68,69,
@@ -455,13 +455,79 @@ void command(void)
 
 int logon(void)
 {
-	int success = 0;
-    
-    
-	//Engineer the code here to LOGON to the system as was done with the MC68000 minimal computer.
-    
-    
+	int success = 0;									//success flag init
+	int attemptCounter = 0;								//attempt counter init
+	int userNameLength = 0;								//username length counter init
+	int passwordLength = 0;								//password length counter init
+	char inputUserName[] = "";							//input user name buffer init
+	char inputPassword[] = "";							//input password buffer init
+
+	usernameBranch:										//username branch
+
+	userNameLength = 0;									//resetting variables
+	inputUserName[] = "";
+
+    uart_putc('\nEnter Username: \n');					//print message
+    while(1){
+		inputUserName[userNameLength] = uart_readc();
+		if(inputUserName[userNameLength] == 13){ 		//checks for carriage return
+			break;
+		}
+		userNameLength++;
+    }
+
+    int j = 0;
+    for(j = 0; j < userNameLength; j++){
+    	if(inputUserName[j] == LOGONNAME[j]){			//checks each character to see if they match
+    		if(j == userNameLength - 1){				//on character before CR if they match then good
+    			goto passwordBranch;					//if correct UN, jump to password input
+    		}											//if not on last character and there is a match, continue
+    	}else{
+    		attemptCounter++;
+    		if(attemptCounter == 2){
+    			return 1;								//if 3rd incorrect attempt lock out user
+    		}else{
+    			goto usernameBranch;					//if not, let them try again
+    		}					
+       	}
+    }
+
+    passwordBranch:										//password branch
+
+    passwordLength = 0;									//resetting variables
+	inputPassword[] = "";
+
+    uart_putc('\nEnter password: \n');					//print message
+	while(1){
+		inputPassword[passwordLength] = uart_readc();
+		if(inputPassword[passwordLength] == 13){ 		//checks for carriage return
+			break;
+		}
+		passwordLength++;
+    }
+
+    j = 0;
+    for(j = 0; j < passwordLength; j++){
+    	if(inputPassword[j] == PASSWORD[j]){			//checks each character to see if they match
+    		if(j == passwordLength - 1){				//on character before CR if they match then good
+    			return 0;								//if correct password, return true
+    		}											//if not on last character and there is a match, continue
+    	}else{
+    		attemptCounter++;							//increment the attempt counter
+    		if(attemptCounter == 2){
+    			return 1;								//if 3rd incorrect attempt return unsuccessful login
+    		}else{
+    			goto usernameBranch;					//if not, let them try again
+    		}					
+       	}
+    }
+ 
     return success;
+}
+
+void lockout(void){
+	uart_putc('\nYou have been locked out.\n');			//print message
+	while(1);											//infinite loop
 }
 
 void kernel_main() 
@@ -469,17 +535,23 @@ void kernel_main()
 	uart_init();
 	enable_irq_57();
 	enable_arm_irq();
-//	if (logon() == 0) while (1) {}
-//	banner();
-//	HELP();
-//	while (1) {command();}
+
+	if (logon() == 0){									//if login is successful
+	 	while (1) {
+	 		banner();									//print banner
+			HELP();										//show help command
+			while (1) {command();}						//loop and wait for a new command
+	 	}
+	}else{												//if login is unsuccessful
+		lockout();										//lock the device
+	}
+
 	
-	while (1) 
-	{
-	uart_putc(' ');
-	uart_putc('A');
-	uart_putc(' ');
-	testdelay();
+	while (1){
+		uart_putc(' ');
+		uart_putc('A');
+		uart_putc(' ');
+		testdelay();
 	}
 }
 
