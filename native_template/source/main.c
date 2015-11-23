@@ -10,6 +10,7 @@
 #include "can.h"
 #include "softfloat.h"
 #include "math.h"
+#include "string.h"
 
 #define SECS 0x00
 #define MINS 0x01
@@ -455,19 +456,19 @@ void command(void)
 
 int logon(void)
 {
-	int success = 0;									//success flag init
+	int success = 0;								//success flag init
 	int attemptCounter = 0;								//attempt counter init
 	int userNameLength = 0;								//username length counter init
 	int passwordLength = 0;								//password length counter init
 	char inputUserName[] = "";							//input user name buffer init
 	char inputPassword[] = "";							//input password buffer init
 
-	usernameBranch:										//username branch
+	usernameBranch:									//username branch
 
-	userNameLength = 0;									//resetting variables
-	inputUserName[] = "";
+	userNameLength = 0;	
+	memset(inputUserName, 0, sizeof(inputUserName));				//resetting variables
 
-    uart_putc('\nEnter Username: \n');					//print message
+    uart_puts("\nEnter Username: \n");					//print message
     while(1){
 		inputUserName[userNameLength] = uart_readc();
 		if(inputUserName[userNameLength] == 13){ 		//checks for carriage return
@@ -495,9 +496,9 @@ int logon(void)
     passwordBranch:										//password branch
 
     passwordLength = 0;									//resetting variables
-	inputPassword[] = "";
+    memset(inputPassword, 0, sizeof(inputPassword));
 
-    uart_putc('\nEnter password: \n');					//print message
+    uart_puts("\nEnter password: \n");					//print message
 	while(1){
 		inputPassword[passwordLength] = uart_readc();
 		if(inputPassword[passwordLength] == 13){ 		//checks for carriage return
@@ -526,7 +527,7 @@ int logon(void)
 }
 
 void lockout(void){
-	uart_putc('\nYou have been locked out.\n');			//print message
+	uart_puts("\nYou have been locked out.\n");			//print message
 	while(1);											//infinite loop
 }
 
@@ -536,20 +537,20 @@ void kernel_main()
 	enable_irq_57();
 	enable_arm_irq();
 
-	if (logon() == 0){									//if login is successful
-	 	while (1) {
-	 		banner();									//print banner
-			HELP();										//show help command
-			while (1) {command();}						//loop and wait for a new command
-	 	}
-	}else{												//if login is unsuccessful
-		lockout();										//lock the device
-	}
+	//if (logon() == 0){									//if login is successful
+	 //	while (1) {
+	 //		banner();									//print banner
+	//		HELP();										//show help command
+	//		while (1) {command();}						//loop and wait for a new command
+	 //	}
+	//}else{												//if login is unsuccessful
+	//	lockout();										//lock the device
+	//}
 
 	
 	while (1){
 		uart_putc(' ');
-		uart_putc('A');
+		uart_putc('B');
 		uart_putc(' ');
 		testdelay();
 	}
